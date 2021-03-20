@@ -63,26 +63,68 @@ QString TestCombiner::getFilesContent()
     return content;
 }
 
-QList<QuestionData> TestCombiner::getQuestionDatas(const QStringList &dataBloks)
+TestCombiner::QuestionDatas TestCombiner::getQuestionDatas(const QStringList &dataBloks)
 {
-    QList<QuestionData> questionDatas;
+    QuestionDatas questionDatas;
     for (const auto& block : dataBloks) {
         QStringList blocksInfo = Internal::getAllMatches(block.trimmed()
                                                    , QRegularExpression("<p>(.*?)<\\/p>"));
         QuestionData questionData;
 
-        for (const auto& info : blocksInfo) {
+        for (auto& info : blocksInfo) {
             if (info.contains("#question#"))
-                questionData.text = info;
-            else
+                questionData.text = info.remove(QRegularExpression("\\d+\\) "));
+            else {
                 questionData.variants.append(info);
+            }
         }
         QString variant = questionData.variants.first();
         questionData.correctAnswered = variant.contains("<font color=\"green\">");
 
-        questionDatas.append(questionData);
+        questionDatas.insert(questionData.text, questionData);
     }
     return questionDatas;
+}
+
+void TestCombiner::combineQuestionDatas(TestCombiner::QuestionDatas *questionDatas)
+{
+    static auto deleteJunk = [](QuestionData& questionData)
+    {
+        questionData.text = questionData.text.remove("#question# ");
+        for (auto& variant : questionData.variants) {
+            static const QRegularExpression reg("<.*?>#variant# (.*?)<.*?>");
+            if (!questionData.variants.first().isEmpty())
+                questionData.variants = Internal::getAllMatches(variant, reg);
+        }
+    };
+
+    static auto addVariants = [](QuestionData& questionData, const QStringList& variants)
+    {
+        for (const auto& variant : variants) {
+            if (questionData.variants.contains(variant))
+                continue;
+            questionData.variants.append(variant);
+        }
+    };
+
+    QuestionDatas result;
+    qDebug() << questionDatas->uniqueKeys().count();
+    for (const QString& key : questionDatas->uniqueKeys()) {
+        QList<QuestionData> duplicates = questionDatas->values(key);
+        QuestionData questionData = duplicates.first();
+        for (const QuestionData& duplicate : duplicates) {
+            if (duplicate.correctAnswered) {
+                questionData = duplicate;
+                break;
+            } else {
+                addVariants(questionData, duplicate.variants);
+            }
+        }
+        deleteJunk(questionData);
+        result.insert(key, questionData);
+    }
+
+    *questionDatas = result;
 }
 
 void TestCombiner::on_combineButton_clicked()
@@ -91,15 +133,8 @@ void TestCombiner::on_combineButton_clicked()
     static const QRegularExpression blockRegex("<!--{-->((?s).*?)<!--}-->");
     QStringList dataBlocks = Internal::getAllMatches(content, blockRegex);
 
-    QList<QuestionData> questionDatas = getQuestionDatas(dataBlocks);
+    QuestionDatas questionDatas = getQuestionDatas(dataBlocks);
+    combineQuestionDatas(&questionDatas);
 
-//    emit dataIsReady(this, "", questionDatas);
-
-    int i = 0;
-    for (const auto & questionData : questionDatas) {
-        qDebug() << ++i;
-        qDebug() << "text: " << questionData.text;
-        qDebug() << "vars: " << questionData.variants;
-        qDebug() << "================================";
-    }
+    emit dataIsReady(this, "", questionDatas.values());
 }

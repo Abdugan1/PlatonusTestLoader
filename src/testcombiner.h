@@ -23,9 +23,11 @@ private slots:
     void on_openFilesButton_clicked();
     void on_combineButton_clicked();
 private:
+    typedef QMultiMap<QString, QuestionData> QuestionDatas;
     void deleteAllFileNames();
     QString getFilesContent();
-    QList<QuestionData> getQuestionDatas(const QStringList& dataBloks);
+    QuestionDatas getQuestionDatas(const QStringList& dataBloks);
+    void combineQuestionDatas(QuestionDatas* questionDatas);
     Ui::TestCombiner *ui;
     QStringList filePaths_;
 };
