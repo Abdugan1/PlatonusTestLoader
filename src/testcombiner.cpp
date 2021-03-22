@@ -74,15 +74,20 @@ TestCombiner::QuestionDatas TestCombiner::getQuestionDatas(const QStringList &da
         for (auto& info : blocksInfo) {
             if (info.contains("#question#"))
                 questionData.text = info.remove(QRegularExpression("\\d+\\) "));
-            else {
+            else
                 questionData.variants.append(info);
-            }
         }
         QString variant = questionData.variants.first();
         questionData.correctAnswered = variant.contains("<font color=\"green\">");
 
         questionDatas.insert(questionData.text, questionData);
     }
+
+    for (const auto& questionData : questionDatas) {
+        qDebug() << "text: " << questionData.text;
+        qDebug() << "variants: " << questionData.variants;
+    }
+
     return questionDatas;
 }
 
@@ -91,11 +96,12 @@ void TestCombiner::combineQuestionDatas(TestCombiner::QuestionDatas *questionDat
     static auto deleteJunk = [](QuestionData& questionData)
     {
         questionData.text = questionData.text.remove("#question# ");
+        QStringList temp;
         for (auto& variant : questionData.variants) {
-            static const QRegularExpression reg("<.*?>#variant# (.*?)<.*?>");
-            if (!questionData.variants.first().isEmpty())
-                questionData.variants = Internal::getAllMatches(variant, reg);
+            static const QRegularExpression reg("<.*?>#variant# (.*?)<((?!img).)*?>");
+            temp.append(Internal::getAllMatches(variant, reg));
         }
+        questionData.variants = temp;
     };
 
     static auto addVariants = [](QuestionData& questionData, const QStringList& variants)
