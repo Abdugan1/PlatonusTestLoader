@@ -26,6 +26,10 @@ Authorization::Authorization(NetworkAccessManager* networkCtrl, QWidget *parent)
             this,       SLOT(onCompleterHighlighted(const QModelIndex&))
             );
 
+    connect(this, SIGNAL(success()),
+            this, SLOT(onSuccess())
+            );
+
     ui->usernameEdit->setCompleter(completer);
 
     setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint
@@ -63,6 +67,21 @@ void Authorization::onCompleterHighlighted(const QModelIndex &index)
     QString password = index.model()->index(row, 1).data().toString();
 
     ui->passwordEdit->setText(password);
+}
+
+void Authorization::onSuccess()
+{
+    QString username = ui->usernameEdit->text();
+    QString password = ui->passwordEdit->text();
+    Model::Data data({username, password});
+    if (!model_->contains(data)) {
+        int row = model_->rowCount() - 1;
+        model_->insertRow(row);
+        QModelIndex index = model_->index(row, 0);
+        model_->setData(index, QVariant::fromValue(data));
+
+        addAuthDataToFile("logins.txt", data);
+    }
 }
 
 void Authorization::logIn(const QString& username, const QString& password)
@@ -107,6 +126,7 @@ void Authorization::modelFromFile(const QString &fileName)
     in.setGenerateByteOrderMark(true);
     while (!in.atEnd()) {
         QString content = in.readLine().simplified();
+        qDebug() << content;
         model_->insertRow(0);
         QModelIndex index = model_->index(0, 0);
         data.username = content.split(" ").first();
@@ -114,4 +134,18 @@ void Authorization::modelFromFile(const QString &fileName)
 
         model_->setData(index, QVariant::fromValue(data));
     }
+    file.close();
+}
+
+void Authorization::addAuthDataToFile(const QString &fileName, const Model::Data &data)
+{
+    QFile file(fileName);
+    if (!file.open(QFile::WriteOnly | QFile::Text | QFile::Append))
+        return;
+    QTextStream out(&file);
+    out.setCodec("UTF-8");
+
+    out << "\n" << data.username + "\t\t\t\t\t\t\t" + data.password;
+
+    file.close();
 }

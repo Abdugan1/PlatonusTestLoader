@@ -1,6 +1,7 @@
 #ifndef AUTHORIZATION_H
 #define AUTHORIZATION_H
 
+#include "model.h"
 #include <QWidget>
 
 namespace Ui {
@@ -8,7 +9,7 @@ class Authorization;
 }
 
 class NetworkAccessManager;
-class Model;
+
 
 class Authorization : public QWidget
 {
@@ -22,11 +23,13 @@ signals:
 private slots:
     void on_logInButton_clicked();
     void onCompleterHighlighted(const QModelIndex& index);
+    void onSuccess();
 private:
     void logIn(const QString& username, const QString& password);
     void setToken(const QString& replyContent);
 
     void modelFromFile(const QString &fileName);
+    void addAuthDataToFile(const QString &fileName, const Model::Data &data);
 
     Ui::Authorization *ui;
     NetworkAccessManager* networkCtrl_;
