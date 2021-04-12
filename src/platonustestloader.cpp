@@ -125,7 +125,6 @@ void PlatonusTestLoader::downloadTest(const TestData& testData)
     highlightIncorrect(questionDataList, testData);
 
     emit dataIsReady(this, testData.name, questionDataList);
-//    saveFile(testData, questionDataList);
 }
 
 QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QStringList& questionBlocks)
@@ -146,7 +145,7 @@ QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QStringList& ques
         if (str.contains(imageIdReg)) {
             QStringList imageIds = Internal::getAllMatches(str, imageIdReg);
 
-            for (const auto& imageId : imageIds) {
+            for (const auto& imageId : qAsConst(imageIds)) {
                 const QRegularExpression imageSrcReg("<((?!https).)*?id=" + imageId + ".*?>");
                 str = str.replace(imageSrcReg, "<img src=\"https://edu2.aues.kz/getImage?id=" + imageId + "\">");
             }
@@ -159,7 +158,6 @@ QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QStringList& ques
         QStringList answeredVariants    = Internal::getAllMatches(questionBlock, answeredVariantReg);
 
         // deleting all junks, leaving only necessary
-        static const QRegularExpression junkReg("<<(((?!img).)*)>>");
         deleteJunk(questionText);
         for (auto& variant : answeredVariants)
             deleteJunk(variant);
@@ -208,12 +206,12 @@ void PlatonusTestLoader::highlightIncorrect(QList<QuestionData>& questionDataLis
     }
 }
 
-void PlatonusTestLoader::on_startDateEdit_userDateChanged(const QDate &date)
+void PlatonusTestLoader::on_startDateEdit_userDateChanged(const QDate &)
 {
     showTestButtons();
 }
 
-void PlatonusTestLoader::on_finishDateEdit_userDateChanged(const QDate &date)
+void PlatonusTestLoader::on_finishDateEdit_userDateChanged(const QDate &)
 {
     showTestButtons();
 }
