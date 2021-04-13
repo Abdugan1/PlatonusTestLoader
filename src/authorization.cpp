@@ -76,6 +76,7 @@ void Authorization::onSuccess()
     Model::Data data({username, password});
     if (!model_->contains(data)) {
         int row = model_->rowCount() - 1;
+        row = row < 0 ? 0 : row;
         model_->insertRow(row);
         QModelIndex index = model_->index(row, 0);
         model_->setData(index, QVariant::fromValue(data));
@@ -123,9 +124,10 @@ void Authorization::modelFromFile(const QString &fileName)
     Model::Data data;
     QTextStream in(&file);
     in.setCodec("UTF-8");
-    in.setGenerateByteOrderMark(true);
     while (!in.atEnd()) {
         QString content = in.readLine().simplified();
+        if (content.isEmpty())
+            continue;
         qDebug() << content;
         model_->insertRow(0);
         QModelIndex index = model_->index(0, 0);
