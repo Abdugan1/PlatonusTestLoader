@@ -7,6 +7,10 @@
 #include <QMessageBox>
 #include <QFile>
 #include <QFileDialog>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonValue>
+#include <QJsonArray>
 
 PlatonusTestLoader::PlatonusTestLoader(NetworkAccessManager* networkCtrl, QWidget *parent)
     : QMainWindow(parent)
@@ -117,28 +121,17 @@ void PlatonusTestLoader::downloadTest(const TestData& testData)
 {
     const QUrl testingUrl("https://edu2.aues.kz/rest/testing_student/testing/ru/" + testData.id);
     networkCtrl_->sendGet(testingUrl);
-    QString content = networkCtrl_->content();
-    static const QRegularExpression questionBlockRegex("{\"questionType\".*?"
-                                                        "\"variants\":\\[{.*?}\\].*?}");
-    QStringList questionBlocks = Internal::getAllMatches(content, questionBlockRegex, 0);
-    QList<QuestionData> questionDataList = getQuestionsData(questionBlocks);
+    QByteArray content = networkCtrl_->content();
+
+    QList<QuestionData> questionDataList = getQuestionsData(content);
     highlightIncorrect(questionDataList, testData);
 
     emit dataIsReady(this, testData.name, questionDataList);
 }
 
-QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QStringList& questionBlocks)
+QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QByteArray &content)
 {
     QList<QuestionData> questionDataList;
-
-    static const QRegularExpression questionTextReg("\\\"questionText\\\":\\\"(.*)\\\",\\\"number");
-    static const QRegularExpression questionIdReg("questionID\\\":(\\d+)");
-    static const QRegularExpression answeredVariantReg(":\\\"(((?!value).)*)\\\",\\\"changed\\\":true");
-
-    static auto deleteJunk = [](QString& str) {
-        static const QRegularExpression junkReg("<<(((?!img).)*)>>");
-        str = str.remove(junkReg);
-    };
 
     static auto addHttp = [](QString& str) {
         static const QRegularExpression imageIdReg("id=(\\d+)");
@@ -152,31 +145,45 @@ QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QStringList& ques
         }
     };
 
-    for (const auto& questionBlock : questionBlocks) {
-        QString     questionText        = Internal::getAllMatches(questionBlock, questionTextReg).first();
-        QString     questionId          = Internal::getAllMatches(questionBlock, questionIdReg).first();
-        QStringList answeredVariants    = Internal::getAllMatches(questionBlock, answeredVariantReg);
+    QJsonDocument document = QJsonDocument::fromJson(content);
+    QJsonObject root = document.object().value("testing").toObject();
+    QJsonObject questionMapObject = root.value("questionsMap").toObject();
+    int count = questionMapObject.keys().count();
 
-        // deleting all junks, leaving only necessary
-        deleteJunk(questionText);
-        for (auto& variant : answeredVariants)
-            deleteJunk(variant);
+    for (int i = 0; i < count; ++i) {
+        QuestionData questionData;
+        QJsonObject object = questionMapObject
+                .value(QString::number(i + 1)).toObject();
 
-        // if text or variants has image, then add http...
+        QJsonValue questionTextValue = object.value("questionText");
+        QString questionText = questionTextValue.toString();
+
         if (questionText.contains("getImage"))
             addHttp(questionText);
 
-        for (auto& variant : answeredVariants) {
+        questionData.text = questionText;
+        qDebug() << "Text:";
+        qDebug() << questionData.text;
+
+
+        QJsonValue questionIdValue = object.value("questionID");
+        questionData.id = questionIdValue.toInt();
+        qDebug() << "ID:" << questionData.id;
+
+        QJsonArray variantsArray = object.value("variants").toArray();
+        qDebug() << "Variants:";
+        int varCount = variantsArray.count();
+        for (int j = 0; j < varCount; ++j) {
+            QJsonValue variantValue = variantsArray.at(j).toObject().value("value");
+            QString variant = variantValue.toString().simplified();
             if (variant.contains("getImage"))
                 addHttp(variant);
+            questionData.variants.append(variant);
+            qDebug() << questionData.variants.last();
         }
 
-        QuestionData questionData;
-        questionData.text       = questionText;
-        questionData.id         = questionId;
-        questionData.variants   = answeredVariants;
-
-        questionDataList.push_front(questionData);
+        questionDataList.append(questionData);
+        qDebug() << "================================";
     }
 
     return questionDataList;
