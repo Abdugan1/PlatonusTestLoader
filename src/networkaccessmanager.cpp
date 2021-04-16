@@ -51,7 +51,7 @@ const ErrorStatus& NetworkAccessManager::errorStatus() const
     return errorStatus_;
 }
 
-const QString& NetworkAccessManager::content() const
+const QByteArray& NetworkAccessManager::content() const
 {
     return content_;
 }

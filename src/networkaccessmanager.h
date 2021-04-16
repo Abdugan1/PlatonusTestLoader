@@ -19,7 +19,7 @@ public:
     void sendPost(const QNetworkRequest& request, const QString& postDataStr);
 
     const ErrorStatus& errorStatus() const;
-    const QString& content() const;
+    const QByteArray &content() const;
 
     const QString& token() const;
     void setToken(const QString& tok);
@@ -29,7 +29,7 @@ private:
     void setErrorStatus(const QNetworkReply* reply);
 
     QString token_;
-    QString content_;
+    QByteArray content_;
     ErrorStatus errorStatus_;
 };
 
