@@ -43,11 +43,23 @@ void PlatonusTestLoaderApp::saveFile(QWidget *parent, const QString &fileName, c
         if (questionData.variants.isEmpty())
             out << ("<p><font color=\"orange\">#variant# " + QString("didn't answered") + "</font></p>\n").toUtf8();
 
+        // leave only the correct answer
+        if (questionData.correctAnswered) {
+            for (const auto& variant : questionData.variants) {
+                if (variant.contains("<!--selected:true-->")) {
+                    out << ("<p><font color=\"green\">#variant# " + variant + "</font></p>\n").toUtf8();
+                    break;
+                }
+            }
+            continue;
+        }
+
+        // highlight answered as red, others as gray
         for (const auto& variant : questionData.variants) {
-            if (questionData.correctAnswered) {
-                out << ("<p><font color=\"green\">#variant# " + variant + "</font></p>\n").toUtf8();
-            } else {
+            if (variant.contains("<!--selected:true-->")) {
                 out << ("<p><font color=\"red\">#variant# " + variant + "</font></p>\n").toUtf8();
+            } else {
+                out << ("<p><font color=\"dimgrey\">#variant# " + variant + "</font></p>\n").toUtf8();
             }
         }
         out << "<!--}-->\n";

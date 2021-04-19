@@ -167,7 +167,7 @@ QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QByteArray &conte
 
 
         QJsonValue questionIdValue = object.value("questionID");
-        questionData.id = questionIdValue.toInt();
+        questionData.id = QString::number(questionIdValue.toInt());
         qDebug() << "ID:" << questionData.id;
 
         QJsonArray variantsArray = object.value("variants").toArray();
@@ -175,7 +175,10 @@ QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QByteArray &conte
         int varCount = variantsArray.count();
         for (int j = 0; j < varCount; ++j) {
             QJsonValue variantValue = variantsArray.at(j).toObject().value("value");
-            QString variant = variantValue.toString().simplified();
+            QJsonValue selected = variantsArray.at(j).toObject().value("changed");
+
+            QString variant = variantValue.toString().simplified()
+                    + "<!--selected:" + (selected.toBool() ? "true" : "false") + "-->";
             if (variant.contains("getImage"))
                 addHttp(variant);
             questionData.variants.append(variant);
@@ -204,7 +207,6 @@ void PlatonusTestLoader::highlightIncorrect(QList<QuestionData>& questionDataLis
     QString content = networkCtrl_->content();
     static const QRegularExpression questionIdReg("id=\"q_(\\d+)\"");
     QStringList incorrectAnsweredIds = Internal::getAllMatches(content, questionIdReg);
-
     for (auto& questionData : questionDataList) {
         if (!incorrectAnsweredIds.contains(questionData.id))
             continue;
