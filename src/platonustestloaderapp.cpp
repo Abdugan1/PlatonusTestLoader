@@ -51,15 +51,13 @@ void PlatonusTestLoaderApp::saveFile(QWidget *parent, const QString &fileName, c
                     break;
                 }
             }
-            continue;
-        }
-
-        // highlight answered as red, others as gray
-        for (const auto& variant : questionData.variants) {
-            if (variant.contains("<!--selected:true-->")) {
-                out << ("<p><font color=\"red\">#variant# " + variant + "</font></p>\n").toUtf8();
-            } else {
-                out << ("<p><font color=\"dimgrey\">#variant# " + variant + "</font></p>\n").toUtf8();
+        } else { // highlight answered as red, others as gray
+            for (const auto& variant : questionData.variants) {
+                if (variant.contains("<!--selected:true-->")) {
+                    out << ("<p><font color=\"red\">#variant# " + variant + "</font></p>\n").toUtf8();
+                } else {
+                    out << ("<p><font color=\"dimgrey\">#variant# " + variant + "</font></p>\n").toUtf8();
+                }
             }
         }
         out << "<!--}-->\n";

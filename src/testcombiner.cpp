@@ -98,7 +98,7 @@ void TestCombiner::combineQuestionDatas(TestCombiner::QuestionDatas *questionDat
         questionData.text = questionData.text.remove("#question# ");
         QStringList temp;
         for (auto& variant : questionData.variants) {
-            static const QRegularExpression reg("<.*?>#variant# (.*?)<((?!img).)*?>");
+            static const QRegularExpression reg("#variant# (.*?)<\\/font>");
             temp.append(Internal::getAllMatches(variant, reg));
         }
         questionData.variants = temp;
