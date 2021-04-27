@@ -41,6 +41,7 @@ private:
     TestButton* createButton(const TestData& testData);
     void deleteAllTestsButton();
     void downloadTest(const TestData& testData);
+    QString getUserLogin();
     QList<QuestionData> getQuestionsData(const QByteArray &content);
     void highlightIncorrect(QList<QuestionData>& questionDataList, const TestData& testData);
 

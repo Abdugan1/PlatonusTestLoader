@@ -125,8 +125,19 @@ void PlatonusTestLoader::downloadTest(const TestData& testData)
 
     QList<QuestionData> questionDataList = getQuestionsData(content);
     highlightIncorrect(questionDataList, testData);
+    QString login = getUserLogin();
 
-    emit dataIsReady(this, testData.name, questionDataList);
+    emit dataIsReady(this, testData.name + "_" + login, questionDataList);
+}
+
+QString PlatonusTestLoader::getUserLogin()
+{
+    static const QUrl personInfoUrl("http://edu2.aues.kz/rest/authorization/person/info/0/0");
+    networkCtrl_->sendGet(personInfoUrl);
+    QByteArray content = networkCtrl_->content();
+    QJsonDocument document = QJsonDocument::fromJson(content);
+    QString login = document.object().value("login").toString();
+    return login;
 }
 
 QList<QuestionData> PlatonusTestLoader::getQuestionsData(const QByteArray &content)
