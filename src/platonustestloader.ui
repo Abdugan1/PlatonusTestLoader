@@ -58,7 +58,7 @@
          <x>0</x>
          <y>0</y>
          <width>380</width>
-         <height>480</height>
+         <height>455</height>
         </rect>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout_3">
@@ -73,6 +73,13 @@
      <widget class="QPushButton" name="logOutButton">
       <property name="text">
        <string>Log &amp;Out</string>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QCheckBox" name="downloadAllCheckBox">
+      <property name="text">
+       <string>Download &amp;All</string>
       </property>
      </widget>
     </item>

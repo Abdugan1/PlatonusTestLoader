@@ -18,6 +18,7 @@ public:
 signals:
 public slots:
     void saveFile(QWidget* parent, const QString& fileName, const QList<QuestionData>& questionDataList);
+    void onDownloadAll(const TestData &testData);
 private slots:
     void onSuccessAuthorization();
     void onLogOut();

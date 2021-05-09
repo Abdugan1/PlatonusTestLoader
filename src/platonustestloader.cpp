@@ -30,9 +30,7 @@ PlatonusTestLoader::~PlatonusTestLoader()
 
 void PlatonusTestLoader::showTestButtons()
 {
-    sendAppealsRequest();
-    QString content = networkCtrl_->content();
-    QList<TestData> testDataList = getTestsData(content);
+    QList<TestData> testDataList = getTestsData();
     setTestsButton(testDataList);
 }
 
@@ -51,7 +49,11 @@ void PlatonusTestLoader::on_logOutButton_clicked()
 void PlatonusTestLoader::onTestButtonClicked()
 {
     TestData testData = qobject_cast<TestButton*>(sender())->testData;
-    downloadTest(testData);
+
+    if (!ui->downloadAllCheckBox->isChecked())
+        downloadTest(testData);
+    else
+        emit downloadAll(testData);
 }
 
 void PlatonusTestLoader::sendAppealsRequest()
@@ -68,15 +70,18 @@ void PlatonusTestLoader::sendAppealsRequest()
     networkCtrl_->sendPost(postRequest, postDataStr);
 }
 
-QList<TestData> PlatonusTestLoader::getTestsData(const QString& replyContent)
+QList<TestData> PlatonusTestLoader::getTestsData()
 {
+    sendAppealsRequest();
+    QString content = networkCtrl_->content();
+
     QList<TestData> testDataList;
 
     static const QRegularExpression testingNameRegex("class=\"filecabinetLink\">(.*)<\\/a>");
     static const QRegularExpression testingIdRegex("testingID=(\\d+)");
 
-    QStringList testingNames    = Internal::getAllMatches(replyContent ,testingNameRegex);
-    QStringList testingIds      = Internal::getAllMatches(replyContent, testingIdRegex);
+    QStringList testingNames    = Internal::getAllMatches(content ,testingNameRegex);
+    QStringList testingIds      = Internal::getAllMatches(content, testingIdRegex);
 
     auto testingIdsIter     = testingIds.begin();
     auto testingNamesIter   = testingNames.begin();
@@ -218,6 +223,21 @@ void PlatonusTestLoader::highlightIncorrect(QList<QuestionData>& questionDataLis
     QString content = networkCtrl_->content();
     static const QRegularExpression questionIdReg("id=\"q_(\\d+)\"");
     QStringList incorrectAnsweredIds = Internal::getAllMatches(content, questionIdReg);
+
+    bool selected = false;
+    for (auto& questionData : questionDataList) {
+        for (auto& variant : questionData.variants) {
+            if (variant.contains("<!--selected:true-->")) {
+                selected = true;
+                break;
+            }
+        }
+        if (!selected) {
+            questionData.correctAnswered = false;
+        }
+        selected = false;
+    }
+
     for (auto& questionData : questionDataList) {
         if (!incorrectAnsweredIds.contains(questionData.id))
             continue;

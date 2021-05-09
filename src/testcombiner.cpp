@@ -66,6 +66,7 @@ QString TestCombiner::getFilesContent()
 TestCombiner::QuestionDatas TestCombiner::getQuestionDatas(const QStringList &dataBloks)
 {
     QuestionDatas questionDatas;
+    int i = 0;
     for (const auto& block : dataBloks) {
         QStringList blocksInfo = Internal::getAllMatches(block.trimmed()
                                                    , QRegularExpression("<p>(.*?)<\\/p>"));
@@ -81,6 +82,7 @@ TestCombiner::QuestionDatas TestCombiner::getQuestionDatas(const QStringList &da
         questionData.correctAnswered = variant.contains("<font color=\"green\">");
 
         questionDatas.insert(questionData.text, questionData);
+        i++;
     }
 
     for (const auto& questionData : questionDatas) {

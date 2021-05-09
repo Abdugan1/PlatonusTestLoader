@@ -13,16 +13,16 @@ Authorization::Authorization(NetworkAccessManager* networkCtrl, QWidget *parent)
     , ui(new Ui::Authorization)
     , networkCtrl_(networkCtrl)
     , model_(new Model(this))
+    , completer_(new QCompleter(this))
 {
     ui->setupUi(this);
 
     modelFromFile("logins.txt");
 
-    QCompleter *completer = new QCompleter(this);
-    completer->setModel(model_);
-    completer->setCaseSensitivity(Qt::CaseInsensitive);
+    completer_->setModel(model_);
+    completer_->setCaseSensitivity(Qt::CaseInsensitive);
 
-    connect(completer,  SIGNAL(highlighted(const QModelIndex&)),
+    connect(completer_,  SIGNAL(highlighted(const QModelIndex&)),
             this,       SLOT(onCompleterHighlighted(const QModelIndex&))
             );
 
@@ -30,7 +30,7 @@ Authorization::Authorization(NetworkAccessManager* networkCtrl, QWidget *parent)
             this, SLOT(onSuccess())
             );
 
-    ui->usernameEdit->setCompleter(completer);
+    ui->usernameEdit->setCompleter(completer_);
 
     setWindowFlags(Qt::Window | Qt::WindowTitleHint | Qt::CustomizeWindowHint
                    | Qt::WindowCloseButtonHint);
@@ -40,6 +40,11 @@ Authorization::Authorization(NetworkAccessManager* networkCtrl, QWidget *parent)
 Authorization::~Authorization()
 {
     delete ui;
+}
+
+const QCompleter *Authorization::getCompleter() const
+{
+    return completer_;
 }
 
 void Authorization::on_logInButton_clicked()
